@@ -54,18 +54,23 @@ public class BodySegmentCube_Test
         bodySize / ( segment.AppendageDiameter * 2.0f ) ) );
 
     expectedAppCount *= expectedAppCount;
-
     expectedAppCount *= 6;
 
     // Get the appendage points.
     List<Vector3> points = null;
-
-    segment.CalculateAppendagePoints(
-      1.0f,
-      out points );
+    segment.CalculateAppendagePoints( 1.0f, out points );
 
     // Test.
     Assert.AreEqual( expectedAppCount, points.Count );
+  }
+
+  //---------------------------------------------------------------------------
+  // Test that the appendage positions are actually on a face of a cubic body.
+
+  [Test]
+  public void AppendagePositions()
+  {
+
   }
 
   //---------------------------------------------------------------------------
