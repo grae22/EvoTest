@@ -57,7 +57,7 @@ public class BodySegmentCube_Test
     expectedAppCount *= 6;
 
     // Get the appendage points.
-    List<Vector3> points = null;
+    List<BodySegment.PositionAndNormal> points = null;
     segment.CalculateAppendagePoints( 1.0f, out points );
 
     // Test.

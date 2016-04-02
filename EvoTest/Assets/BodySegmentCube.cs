@@ -60,9 +60,9 @@ namespace Assets
       
     public override void CalculateAppendagePoints(
       float fillFactor,
-      out List<Vector3> points )
+      out List<PositionAndNormal> points )
     {
-      points = new List<Vector3>();
+      points = new List<BodySegment.PositionAndNormal>();
 
       // How many appendages can we fit per face of our cubic body?
       // We multiply the appendage-diameter by 2 since we want the appendages
@@ -76,7 +76,8 @@ namespace Assets
       int appCount = appPerFaceCount * (int)Face.FACE_COUNT;
 
       // Create the appendage positions.
-      Vector3[,] faces = new Vector3[ (int)Face.FACE_COUNT, appPerFaceCount ];
+      BodySegment.PositionAndNormal[,] faces =
+        new BodySegment.PositionAndNormal[ (int)Face.FACE_COUNT, appPerFaceCount ];
 
       int breakoutCount = appCount * appCount;
 
@@ -95,7 +96,7 @@ namespace Assets
         int p = Random.Range( 0, appPerFaceCount );
 
         // Is this position on this face already used?
-        if( faces[ f, p ].magnitude > Mathf.Epsilon )
+        if( faces[ f, p ].position.magnitude > Mathf.Epsilon )
         {
           continue;
         }
@@ -123,14 +124,14 @@ namespace Assets
     // appendageDiameter: Diameter of appendage being added.
     // appendageIndexOnFace: Index in the range (0, max # appendages per face).
 
-    private static Vector3 CalculateAppendagePositionOnFace(
+    private static BodySegment.PositionAndNormal CalculateAppendagePositionOnFace(
       Face face,
       float cubeSize,
       int appendagePerRowCount,
       float appendageDiameter,
       int appendageIndexOnFace )
     {
-      Vector3 position = new Vector3();
+      BodySegment.PositionAndNormal posAndNorm = new BodySegment.PositionAndNormal();
 
       // Calc the row & column on the face we're adding this appendage.
       int rowIndex = appendageIndexOnFace / appendagePerRowCount;
@@ -140,39 +141,45 @@ namespace Assets
       switch( face )
       {
         case Face.TOP:
-          position.x = rowIndex * ( appendageDiameter * 2.0f );
-          position.y = cubeSize * 0.5f;
-          position.z = colIndex * ( appendageDiameter * 2.0f );
+          posAndNorm.position.x = rowIndex * ( appendageDiameter * 2.0f );
+          posAndNorm.position.y = cubeSize * 0.5f;
+          posAndNorm.position.z = colIndex * ( appendageDiameter * 2.0f );
+          posAndNorm.normal.Set( 0f, 1f, 0f );
           break;
 
         case Face.BOTTOM:
-          position.x = rowIndex * ( appendageDiameter * 2.0f );
-          position.y = cubeSize * -0.5f;
-          position.z = colIndex * ( appendageDiameter * 2.0f );
+          posAndNorm.position.x = rowIndex * ( appendageDiameter * 2.0f );
+          posAndNorm.position.y = cubeSize * -0.5f;
+          posAndNorm.position.z = colIndex * ( appendageDiameter * 2.0f );
+          posAndNorm.normal.Set( 0f, -1f, 0f );
           break;
 
         case Face.NORTH:
-          position.x = rowIndex * ( appendageDiameter * 2.0f );
-          position.y = colIndex * ( appendageDiameter * 2.0f );
-          position.z = cubeSize * 0.5f;
+          posAndNorm.position.x = rowIndex * ( appendageDiameter * 2.0f );
+          posAndNorm.position.y = colIndex * ( appendageDiameter * 2.0f );
+          posAndNorm.position.z = cubeSize * 0.5f;
+          posAndNorm.normal.Set( 0f, 0f, 1f );
           break;
 
         case Face.EAST:
-          position.x = cubeSize * 0.5f;
-          position.y = rowIndex * ( appendageDiameter * 2.0f );
-          position.z = colIndex * ( appendageDiameter * 2.0f );
+          posAndNorm.position.x = cubeSize * 0.5f;
+          posAndNorm.position.y = rowIndex * ( appendageDiameter * 2.0f );
+          posAndNorm.position.z = colIndex * ( appendageDiameter * 2.0f );
+          posAndNorm.normal.Set( 1f, 0f, 0f );
           break;
 
         case Face.SOUTH:
-          position.x = rowIndex * ( appendageDiameter * 2.0f );
-          position.y = colIndex * ( appendageDiameter * 2.0f );
-          position.z = cubeSize * -0.5f;
+          posAndNorm.position.x = rowIndex * ( appendageDiameter * 2.0f );
+          posAndNorm.position.y = colIndex * ( appendageDiameter * 2.0f );
+          posAndNorm.position.z = cubeSize * -0.5f;
+          posAndNorm.normal.Set( 0f, 0f, -1f );
           break;
 
         case Face.WEST:
-          position.x = cubeSize * -0.5f;
-          position.y = rowIndex * ( appendageDiameter * 2.0f );
-          position.z = colIndex * ( appendageDiameter * 2.0f );
+          posAndNorm.position.x = cubeSize * -0.5f;
+          posAndNorm.position.y = rowIndex * ( appendageDiameter * 2.0f );
+          posAndNorm.position.z = colIndex * ( appendageDiameter * 2.0f );
+          posAndNorm.normal.Set( -1f, 0f, 0f );
           break;
 
         default:
@@ -180,7 +187,7 @@ namespace Assets
           break;
       }
 
-      return position;
+      return posAndNorm;
     }
 
     //-------------------------------------------------------------------------

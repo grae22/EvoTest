@@ -13,9 +13,15 @@ namespace Assets
     // fillFactor: (0.0, 1.0) 0.0 = No appendages; 1.0 = Max # of appendages.
     // points: Points list to be populated.
 
+    public struct PositionAndNormal
+    {
+      public Vector3 position;
+      public Vector3 normal;
+    };
+
     public abstract void CalculateAppendagePoints(
       float fillFactor,             
-      out List<Vector3> points );
+      out List<PositionAndNormal> points );
 
     //-------------------------------------------------------------------------
   }
