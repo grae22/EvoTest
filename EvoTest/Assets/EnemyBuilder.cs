@@ -8,27 +8,31 @@ public class EnemyBuilder : MonoBehaviour
 
   void Start()
   {
-    List<BodySegment.PositionAndNormal> appendagePoints;
+    List<BodyAppendage> appendages;
 
     BodySegmentCube seg =
       new BodySegmentCube(
-        1f,
+        1.0f,
         0.05f,
-        0.2f );
+        0.1f,
+        0.5f,
+        2.0f );
 
-    seg.CalculateAppendagePoints(
-      0.5f,
-      out appendagePoints );
+    seg.CalculateAppendageProperties(
+      0.25f,
+      out appendages );
 
     GameObject segCube = GameObject.CreatePrimitive( PrimitiveType.Cube );
+    segCube.gameObject.transform.parent = transform;
     segCube.transform.localScale.Set( 1f, 1f, 1f );
 
-    foreach( BodySegment.PositionAndNormal pos in appendagePoints )
+    foreach( BodyAppendage app in appendages )
     {
-      GameObject app = GameObject.CreatePrimitive( PrimitiveType.Cylinder );
-      app.transform.localScale.Set( 1f, seg.AppendageDiameter, 1f );
-      app.transform.position = pos.position;
-      //app.transform.Rotate( pos.normal );
+      GameObject appGob = GameObject.CreatePrimitive( PrimitiveType.Cylinder );
+      appGob.transform.parent = segCube.transform;
+      appGob.transform.localScale = new Vector3( seg.AppendageDiameter, seg.AppendageLength, seg.AppendageDiameter );
+      appGob.transform.position = app.Position;
+      appGob.transform.rotation = app.Rotation;
     }
   }
 

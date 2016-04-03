@@ -23,46 +23,58 @@ namespace Assets
     // Properties.
 
     public float Size { get; private set; }
-    public float AppendageDiameter { get; set; }
+    public float AppendageDiameter { get; private set; }
+    public float AppendageLength { get; private set; }
 
     //-------------------------------------------------------------------------
     // Constructor.
 
     public BodySegmentCube(
       float size,
-      float appendageFactorOfBodyDiameterMin,
-      float appendageFactorOfBodyDiameterMax )
+      float appendageDiameterFactorOfBodySizeMin,
+      float appendageDiameterFactorOfBodySizeMax,
+      float appendageLengthFactorOfBodySizeMin,
+      float appendageLengthFactorOfBodySizeMax )
     {
       Size = size;
 
-      CalculateAppendageDiameter(
-        appendageFactorOfBodyDiameterMin,
-        appendageFactorOfBodyDiameterMax );
+      CalculateAppendageDiameterAndLength(
+        appendageDiameterFactorOfBodySizeMin,
+        appendageDiameterFactorOfBodySizeMax,
+        appendageLengthFactorOfBodySizeMin,
+        appendageLengthFactorOfBodySizeMax );
     }
 
     //-------------------------------------------------------------------------
-    // Calculates what the diameter of appendages connected to this body
-    // will be. The resulting diameter will be a random value between
-    // the min & max values passed in.
+    // Calculates what the diameter & length of appendages connected to this
+    // body will be. The resulting diameter/length will be a random value
+    // between the min & max values passed in.
 
-    private void CalculateAppendageDiameter(
-      float appendageFactorOfBodyDiameterMin,
-      float appendageFactorOfBodyDiameterMax )
+    private void CalculateAppendageDiameterAndLength(
+      float diameterFactorOfBodySizeMin,
+      float diameterFactorOfBodySizeMax,
+      float lengthFactorOfBodySizeMin,
+      float lengthFactorOfBodySizeMax )
     {
       AppendageDiameter =
         Random.Range(
-          Size * appendageFactorOfBodyDiameterMin,
-          Size * appendageFactorOfBodyDiameterMax );
+          Size * diameterFactorOfBodySizeMin,
+          Size * diameterFactorOfBodySizeMax );
+
+      AppendageLength =
+        Random.Range(
+          Size * lengthFactorOfBodySizeMin,
+          Size * lengthFactorOfBodySizeMax );
     }
 
     //-------------------------------------------------------------------------
-    // Implementation of BodySegment::CalculateAppendagePoints().
+    // Implementation of BodySegment::CalculateAppendageProperties().
       
-    public override void CalculateAppendagePoints(
+    public override void CalculateAppendageProperties(
       float fillFactor,
-      out List<PositionAndNormal> points )
+      out List<BodyAppendage> points )
     {
-      points = new List<BodySegment.PositionAndNormal>();
+      points = new List<BodyAppendage>();
 
       // How many appendages can we fit per face of our cubic body?
       // We multiply the appendage-diameter by 2 since we want the appendages
@@ -76,12 +88,12 @@ namespace Assets
       int appCount = appPerFaceCount * (int)Face.FACE_COUNT;
 
       // Create the appendage positions.
-      BodySegment.PositionAndNormal[,] faces =
-        new BodySegment.PositionAndNormal[ (int)Face.FACE_COUNT, appPerFaceCount ];
+      BodyAppendage[,] faces =
+        new BodyAppendage[ (int)Face.FACE_COUNT, appPerFaceCount ];
 
       int breakoutCount = appCount * appCount;
 
-      while( points.Count < appCount )
+      while( points.Count < appCount * fillFactor )
       {
         // Don't spin in this loop forever.
         if( --breakoutCount < 0 )
@@ -96,7 +108,7 @@ namespace Assets
         int p = Random.Range( 0, appPerFaceCount );
 
         // Is this position on this face already used?
-        if( faces[ f, p ].position.magnitude > Mathf.Epsilon )
+        if( faces[ f, p ] != null )
         {
           continue;
         }
@@ -108,6 +120,7 @@ namespace Assets
             Size,
             appPerRowCount,
             AppendageDiameter,
+            AppendageLength,
             p );
 
         points.Add( faces[ f, p ] );
@@ -124,14 +137,18 @@ namespace Assets
     // appendageDiameter: Diameter of appendage being added.
     // appendageIndexOnFace: Index in the range (0, max # appendages per face).
 
-    private static BodySegment.PositionAndNormal CalculateAppendagePositionOnFace(
+    private static BodyAppendage CalculateAppendagePositionOnFace(
       Face face,
       float cubeSize,
       int appendagePerRowCount,
       float appendageDiameter,
+      float appendageLength,
       int appendageIndexOnFace )
     {
-      BodySegment.PositionAndNormal posAndNorm = new BodySegment.PositionAndNormal();
+      BodyAppendage appendage = new BodyAppendage();
+
+      appendage.Diameter = appendageDiameter;
+      appendage.Length = appendageLength;
 
       // Calc the row & column on the face we're adding this appendage.
       int rowIndex = appendageIndexOnFace / appendagePerRowCount;
@@ -141,45 +158,63 @@ namespace Assets
       switch( face )
       {
         case Face.TOP:
-          posAndNorm.position.x = rowIndex * ( appendageDiameter * 2.0f );
-          posAndNorm.position.y = cubeSize * 0.5f;
-          posAndNorm.position.z = colIndex * ( appendageDiameter * 2.0f );
-          posAndNorm.normal.Set( 0f, 1f, 0f );
+          appendage.Position =
+            new Vector3(
+              ( -cubeSize * 0.5f ) + appendageDiameter + ( rowIndex * ( appendageDiameter * 2.0f ) ),
+              ( cubeSize * 0.5f ) + ( appendageLength * 0.5f ),
+              ( -cubeSize * 0.5f ) + appendageDiameter + ( colIndex * ( appendageDiameter * 2.0f ) ) );
+
+          appendage.Rotation = Quaternion.Euler( 0f, 0f, 0f );
           break;
 
         case Face.BOTTOM:
-          posAndNorm.position.x = rowIndex * ( appendageDiameter * 2.0f );
-          posAndNorm.position.y = cubeSize * -0.5f;
-          posAndNorm.position.z = colIndex * ( appendageDiameter * 2.0f );
-          posAndNorm.normal.Set( 0f, -1f, 0f );
+          appendage.Position =
+            new Vector3(
+              ( -cubeSize * 0.5f ) + appendageDiameter + ( rowIndex * ( appendageDiameter * 2.0f ) ),
+              ( cubeSize * -0.5f ) - ( appendageLength * 0.5f ),
+              ( -cubeSize * 0.5f ) + appendageDiameter + ( colIndex * ( appendageDiameter * 2.0f ) ) );
+
+          appendage.Rotation = Quaternion.Euler( 0f, 180f, 0f );
           break;
 
         case Face.NORTH:
-          posAndNorm.position.x = rowIndex * ( appendageDiameter * 2.0f );
-          posAndNorm.position.y = colIndex * ( appendageDiameter * 2.0f );
-          posAndNorm.position.z = cubeSize * 0.5f;
-          posAndNorm.normal.Set( 0f, 0f, 1f );
+          appendage.Position =
+            new Vector3(
+              ( -cubeSize * 0.5f ) + appendageDiameter + ( rowIndex * ( appendageDiameter * 2.0f ) ),
+              ( -cubeSize * 0.5f ) + appendageDiameter + ( colIndex * ( appendageDiameter * 2.0f ) ),
+              ( cubeSize * 0.5f ) + ( appendageLength * 0.5f ) );
+
+          appendage.Rotation = Quaternion.Euler( 90f, 0f, 0f );
           break;
 
         case Face.EAST:
-          posAndNorm.position.x = cubeSize * 0.5f;
-          posAndNorm.position.y = rowIndex * ( appendageDiameter * 2.0f );
-          posAndNorm.position.z = colIndex * ( appendageDiameter * 2.0f );
-          posAndNorm.normal.Set( 1f, 0f, 0f );
+          appendage.Position =
+            new Vector3(
+              ( cubeSize * 0.5f ) + ( appendageLength * 0.5f ),
+              ( -cubeSize * 0.5f ) + appendageDiameter + rowIndex * ( appendageDiameter * 2.0f ),
+              ( -cubeSize * 0.5f ) + appendageDiameter + colIndex * ( appendageDiameter * 2.0f ) );
+
+          appendage.Rotation = Quaternion.Euler( 0f, 0f, 90f );
           break;
 
         case Face.SOUTH:
-          posAndNorm.position.x = rowIndex * ( appendageDiameter * 2.0f );
-          posAndNorm.position.y = colIndex * ( appendageDiameter * 2.0f );
-          posAndNorm.position.z = cubeSize * -0.5f;
-          posAndNorm.normal.Set( 0f, 0f, -1f );
+          appendage.Position =
+            new Vector3(
+              ( -cubeSize * 0.5f ) + appendageDiameter + ( rowIndex * ( appendageDiameter * 2.0f ) ),
+              ( -cubeSize * 0.5f ) + appendageDiameter + ( colIndex * ( appendageDiameter * 2.0f ) ),
+              ( cubeSize * -0.5f ) - ( appendageLength * 0.5f ) );
+
+          appendage.Rotation = Quaternion.Euler( 270f, 0f, 0f );
           break;
 
         case Face.WEST:
-          posAndNorm.position.x = cubeSize * -0.5f;
-          posAndNorm.position.y = rowIndex * ( appendageDiameter * 2.0f );
-          posAndNorm.position.z = colIndex * ( appendageDiameter * 2.0f );
-          posAndNorm.normal.Set( -1f, 0f, 0f );
+          appendage.Position =
+            new Vector3(
+              ( cubeSize * -0.5f ) - ( appendageLength * 0.5f ),
+              ( -cubeSize * 0.5f ) + appendageDiameter + rowIndex * ( appendageDiameter * 2.0f ),
+              ( -cubeSize * 0.5f ) + appendageDiameter + colIndex * ( appendageDiameter * 2.0f ) );
+
+          appendage.Rotation = Quaternion.Euler( 0f, 0f, 270f );
           break;
 
         default:
@@ -187,7 +222,7 @@ namespace Assets
           break;
       }
 
-      return posAndNorm;
+      return appendage;
     }
 
     //-------------------------------------------------------------------------

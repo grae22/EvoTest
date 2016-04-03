@@ -6,24 +6,33 @@ using NUnit.Framework;
 public class BodySegmentCube_Test
 {
   //---------------------------------------------------------------------------
-  // Test that the calculated appendage diameter is within the range
+  // Test that the calculated appendage diameter & length is within the range
   // we're expecting - ( bodySize * minFactor, bodySize * maxFactor ).
 
   [Test]
-  public void AppendageDiameter()
+  public void AppendageDiameterAndLength()
   {
     const float bodySize = 10.0f;
-    const float appendageFactorMin = 0.05f;
-    const float appendageFactorMax = 0.2f;
+    const float diameterFactorMin = 0.05f;
+    const float diameterFactorMax = 0.2f;
+    const float lengthFactorMin = 0.5f;
+    const float lengthFactorMax = 2.0f;
 
     BodySegmentCube segment =
       new BodySegmentCube(
         bodySize,
-        appendageFactorMin,
-        appendageFactorMax );
+        diameterFactorMin,
+        diameterFactorMax,
+        lengthFactorMin,
+        lengthFactorMax );
 
-    Assert.GreaterOrEqual( segment.AppendageDiameter, bodySize * appendageFactorMin );
-    Assert.LessOrEqual( segment.AppendageDiameter, bodySize * appendageFactorMax );
+    // Diameter.
+    Assert.GreaterOrEqual( segment.AppendageDiameter, bodySize * diameterFactorMin );
+    Assert.LessOrEqual( segment.AppendageDiameter, bodySize * diameterFactorMax );
+
+    // Length.
+    Assert.GreaterOrEqual( segment.AppendageLength, bodySize * lengthFactorMin );
+    Assert.LessOrEqual( segment.AppendageLength, bodySize * lengthFactorMax );
   }
 
   //---------------------------------------------------------------------------
@@ -33,15 +42,15 @@ public class BodySegmentCube_Test
   public void AppendageCount()
   {
     // Create a body segment.
-    const float bodySize = 6.0f;
-    const float appendageFactorMin = 0.1666666666666667f;
-    const float appendageFactorMax = 0.1666666666666667f;
+    float bodySize = 6f;
 
     BodySegmentCube segment =
       new BodySegmentCube(
         bodySize,
-        appendageFactorMin,
-        appendageFactorMax );
+        0.1f,
+        1f,
+        1f,
+        2f );
 
     // Figure out how many points we should get.
     // We multiply the appendage-diameter by 2 since we want there to be at
@@ -56,12 +65,18 @@ public class BodySegmentCube_Test
     expectedAppCount *= expectedAppCount;
     expectedAppCount *= 6;
 
-    // Get the appendage points.
-    List<BodySegment.PositionAndNormal> points = null;
-    segment.CalculateAppendagePoints( 1.0f, out points );
+    // Get the appendages.
+    List<BodyAppendage> appendages = null;
+    segment.CalculateAppendageProperties( 1.0f, out appendages );
 
     // Test.
-    Assert.AreEqual( expectedAppCount, points.Count );
+    Assert.AreEqual( expectedAppCount, appendages.Count );
+
+    // Get the appendages.
+    segment.CalculateAppendageProperties( 0.5f, out appendages );
+
+    // Test.
+    Assert.AreEqual( expectedAppCount * 0.5f, appendages.Count );
   }
 
   //---------------------------------------------------------------------------
